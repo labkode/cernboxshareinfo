@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package proto;
+
+message ShareInfo {
+	int64 id = 1;
+	int64 share_type = 2;
+	string share_with = 3;
+	string uid_owner = 4;
+	int64 parent = 5;
+	string item_type = 6;
+	int64 item_source = 7;
+	string item_target = 8;
+	int64 file_source = 9;
+	string file_target = 10;
+	string permissions = 11;
+	int64 stime = 12;
+	int64 accepted = 13;
+	string expiration = 14;
+	string token = 15; 
+	int64 mail_send = 16;
+}
+
+message PersonInfo {
+	string login = 1;
+	int64 uid = 2;
+	string department = 3;
+	string group = 4;
+	string organization = 5;
+	string company = 6;
+	string office = 7;
+}
+
+message FlatInfo {
+	ShareInfo shareInfo = 1;
+	PersonInfo ownerInfo = 2;
+	PersonInfo shareeInfo = 3;
+}

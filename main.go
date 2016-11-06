@@ -30,6 +30,7 @@ var mysqlusername string
 var mysqlpassword string
 var mysqldatabase string
 var mysqlport int
+var testcases int
 
 func main() {
 	flag.StringVar(&sqlFile, "sqlfile", "shares.sql", "file containing the mysql oc_shares dump")
@@ -40,6 +41,7 @@ func main() {
 	flag.StringVar(&mysqlpassword, "mysqlpassword", "admin", "mysql password")
 	flag.StringVar(&mysqldatabase, "mysqldatabase", "mydb", "mysql database")
 	flag.IntVar(&mysqlport, "mysqlport", 3306, "mysql port")
+	flag.IntVar(&testcases, "testcases", -1, "number of test cases")
 	flag.Parse()
 
 	fmt.Printf("Loading shares from: %s\n", sqlFile)
@@ -145,6 +147,10 @@ func main() {
 		iter.Release()
 		fmt.Printf("Loaded %d entries from phonebook cached db\n", total)
 	}
+	
+	if testcases > -1 {
+		shareInfos = shareInfos[:testcases]
+	}
 
 	total := len(shareInfos)
 	for i, shareInfo := range shareInfos {
@@ -207,6 +213,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	createDepartments(sqldb, flatInfos)
+	createGroups(sqldb, flatInfos)
 	createCompanies(sqldb, flatInfos)
 }
 
@@ -221,13 +229,52 @@ func createCompanies(db *sql.DB, flatInfos []*proto.FlatInfo) {
 		}
 	}
 	for pk := range companies {
-		company := &models.DimensionCompany{}
+		company := models.DimensionCompany{}
 		company.Company = pk
-		if err := company.Save(db); err != nil {
+		if err := company.Insert(db); err != nil {
 			log.Fatal(err)
 		}
 	}
 }
+
+func createGroups(db *sql.DB, flatInfos []*proto.FlatInfo) {
+	groups := map[string]*proto.FlatInfo{}
+	for _, flatInfo := range flatInfos {
+		if _, ok :=groups[flatInfo.GetOwnerInfo().Group]; !ok {
+			groups[flatInfo.GetOwnerInfo().Group] = flatInfo
+		}
+		if _, ok :=groups[flatInfo.GetShareeInfo().Group]; !ok {
+			groups[flatInfo.GetShareeInfo().Group] = flatInfo
+		}
+	}
+	for pk := range groups {
+		group := models.DimensionGroup{}
+		group.Group = pk
+		if err :=group.Insert(db); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func createDepartments(db *sql.DB, flatInfos []*proto.FlatInfo) {
+	departments := map[string]*proto.FlatInfo{}
+	for _, flatInfo := range flatInfos {
+		if _, ok :=departments[flatInfo.GetOwnerInfo().Department]; !ok {
+			departments[flatInfo.GetOwnerInfo().Department] = flatInfo
+		}
+		if _, ok :=departments[flatInfo.GetShareeInfo().Department]; !ok {
+			departments[flatInfo.GetShareeInfo().Department] = flatInfo
+		}
+	}
+	for pk := range departments {
+		department := models.DimensionDepartment{}
+		department.Department = pk
+		if err :=department.Insert(db); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
 func getPersonInfo(username string) (*proto.PersonInfo, error) {
 	cmd := exec.Command(phonebookBinary, "--login", username, "-t", "login", "-t", "uid", "-t", "department", "-t", "organization", "-t", "company", "-t", "office")
 	stdout, _, err := executeCMD(cmd)

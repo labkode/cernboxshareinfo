@@ -38,26 +38,20 @@ func (dd *DimensionDepartment) Insert(db XODB) error {
 
 	// sql query
 	const sqlstr = `INSERT INTO mydb.dimension_department (` +
+		`department,` +
 		`opaque` +
 		`) VALUES (` +
+		`?,` +
 		`?` +
 		`)`
 
 	// run query
 	XOLog(sqlstr, dd.Opaque)
-	res, err := db.Exec(sqlstr, dd.Opaque)
+	_, err = db.Exec(sqlstr, dd.Department, dd.Opaque)
 	if err != nil {
 		return err
 	}
 
-	// retrieve id
-	id, err := res.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	// set primary key and existence
-	dd.Department = string(id)
 	dd._exists = true
 
 	return nil

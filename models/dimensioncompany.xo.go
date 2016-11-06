@@ -38,26 +38,20 @@ func (dc *DimensionCompany) Insert(db XODB) error {
 
 	// sql query
 	const sqlstr = `INSERT INTO mydb.dimension_company (` +
+		`company,` +
 		`opaque` +
 		`) VALUES (` +
+		`?,` +
 		`?` +
 		`)`
 
 	// run query
 	XOLog(sqlstr, dc.Opaque)
-	res, err := db.Exec(sqlstr, dc.Opaque)
+	_, err = db.Exec(sqlstr, dc.Company, dc.Opaque)
 	if err != nil {
 		return err
 	}
 
-	// retrieve id
-	id, err := res.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	// set primary key and existence
-	dc.Company = string(id)
 	dc._exists = true
 
 	return nil

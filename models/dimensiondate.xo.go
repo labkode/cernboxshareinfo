@@ -37,26 +37,18 @@ func (dd *DimensionDate) Insert(db XODB) error {
 
 	// sql query
 	const sqlstr = `INSERT INTO mydb.dimension_date (` +
-		`day, month, year` +
+		`ts, day, month, year` +
 		`) VALUES (` +
-		`?, ?, ?` +
+		`?,?, ?, ?` +
 		`)`
 
 	// run query
 	XOLog(sqlstr, dd.Day, dd.Month, dd.Year)
-	res, err := db.Exec(sqlstr, dd.Day, dd.Month, dd.Year)
+	_, err = db.Exec(sqlstr, dd.Ts, dd.Day, dd.Month, dd.Year)
 	if err != nil {
 		return err
 	}
 
-	// retrieve id
-	id, err := res.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	// set primary key and existence
-	dd.Ts = int(id)
 	dd._exists = true
 
 	return nil

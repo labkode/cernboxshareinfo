@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
@@ -216,6 +217,7 @@ func main() {
 	createDepartments(sqldb, flatInfos)
 	createGroups(sqldb, flatInfos)
 	createCompanies(sqldb, flatInfos)
+	createDates(sqldb, flatInfos)
 }
 
 func createCompanies(db *sql.DB, flatInfos []*proto.FlatInfo) {
@@ -249,7 +251,7 @@ func createGroups(db *sql.DB, flatInfos []*proto.FlatInfo) {
 	}
 	for pk := range groups {
 		group := models.DimensionGroup{}
-		group.Group = pk
+		group.Egroup = pk
 		if err :=group.Insert(db); err != nil {
 			log.Fatal(err)
 		}
@@ -275,8 +277,34 @@ func createDepartments(db *sql.DB, flatInfos []*proto.FlatInfo) {
 	}
 }
 
+func createDates(db *sql.DB, flatInfos []*proto.FlatInfo) {
+	dates := map[int64]*proto.FlatInfo{}
+	for _, flatInfo := range flatInfos {
+		if _, ok := dates[flatInfo.GetShareInfo().Stime]; !ok {
+			dates[flatInfo.GetShareInfo().Stime] = flatInfo
+		}
+	}
+	for pk := range dates {
+		t := time.Unix(pk, 0)
+		day := t.Day();
+		month := t.Month()
+		year := t.Year()
+
+		d := models.DimensionDate{}
+		d.Ts = int(pk)
+		d.Day = day
+		d.Month = int(month)
+		d.Year = year
+
+		if err := d.Insert(db); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+
 func getPersonInfo(username string) (*proto.PersonInfo, error) {
-	cmd := exec.Command(phonebookBinary, "--login", username, "-t", "login", "-t", "uid", "-t", "department", "-t", "organization", "-t", "company", "-t", "office")
+	cmd := exec.Command(phonebookBinary, "--login", username, "-t", "login", "-t", "uid", "-t", "department", "-t", "group", "-t", "organization", "-t", "company", "-t", "office")
 	stdout, _, err := executeCMD(cmd)
 	if err != nil {
 		return nil, err
@@ -290,9 +318,10 @@ func getPersonInfo(username string) (*proto.PersonInfo, error) {
 	personInfo.Login = tokens[0]
 	personInfo.Uid = int64(uid)
 	personInfo.Department = tokens[2]
-	personInfo.Organization = tokens[3]
-	personInfo.Company = tokens[4]
-	personInfo.Office = tokens[5]
+	personInfo.Group= tokens[3]
+	personInfo.Organization = tokens[4]
+	personInfo.Company = tokens[5]
+	personInfo.Office = tokens[6]
 	return personInfo, nil
 }
 

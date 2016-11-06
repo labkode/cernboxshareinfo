@@ -38,26 +38,20 @@ func (dg *DimensionGroup) Insert(db XODB) error {
 
 	// sql query
 	const sqlstr = `INSERT INTO mydb.dimension_group (` +
+		`egroup,` +
 		`opaque` +
 		`) VALUES (` +
+		`?,` +
 		`?` +
 		`)`
 
 	// run query
 	XOLog(sqlstr, dg.Opaque)
-	res, err := db.Exec(sqlstr, dg.Opaque)
+	_, err = db.Exec(sqlstr, dg.Egroup, dg.Opaque)
 	if err != nil {
 		return err
 	}
 
-	// retrieve id
-	id, err := res.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	// set primary key and existence
-	dg.Egroup = string(id)
 	dg._exists = true
 
 	return nil

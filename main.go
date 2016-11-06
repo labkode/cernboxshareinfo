@@ -32,6 +32,9 @@ var mysqlpassword string
 var mysqldatabase string
 var mysqlport int
 var testcases int
+var fillstarmodel bool
+var showdata bool
+var outputasjson bool
 
 func main() {
 	flag.StringVar(&sqlFile, "sqlfile", "shares.sql", "file containing the mysql oc_shares dump")
@@ -43,6 +46,9 @@ func main() {
 	flag.StringVar(&mysqldatabase, "mysqldatabase", "mydb", "mysql database")
 	flag.IntVar(&mysqlport, "mysqlport", 3306, "mysql port")
 	flag.IntVar(&testcases, "testcases", -1, "number of test cases")
+	flag.BoolVar(&fillstarmodel, "fillstarmodel", false, "fill the existing sql star model on the configured mysql database")
+	flag.BoolVar(&showdata, "showdata", true, "if enabled outputs the correlated data (one line per record)")
+	flag.BoolVar(&outputasjson, "outputasjson", false, "if enabled outputs the data in JSON format instead of proto format")
 	flag.Parse()
 
 	fmt.Printf("Loading shares from: %s\n", sqlFile)
@@ -208,16 +214,35 @@ func main() {
 		}
 	}
 
-	// forward data to sql
-	sqldb, err := dburl.Open(fmt.Sprintf("mysql://%s:%s@%s:%d/%s", mysqlusername, mysqlpassword, mysqlhost, mysqlport, mysqldatabase))
-	if err != nil {
-		log.Fatal(err)
+	if fillstarmodel {
+		// forward data to sql
+		sqldb, err := dburl.Open(fmt.Sprintf("mysql://%s:%s@%s:%d/%s", mysqlusername, mysqlpassword, mysqlhost, mysqlport, mysqldatabase))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		createDepartments(sqldb, flatInfos)
+		createGroups(sqldb, flatInfos)
+		createCompanies(sqldb, flatInfos)
+		createDates(sqldb, flatInfos)
+		createShares(sqldb, flatInfos)
+		fmt.Println("Filled SQL star model with sharing data")
 	}
 
-	createDepartments(sqldb, flatInfos)
-	createGroups(sqldb, flatInfos)
-	createCompanies(sqldb, flatInfos)
-	createDates(sqldb, flatInfos)
+	if showdata {
+		if outputasjson {
+			jsonData, err := json.MarshalIndent(flatInfos, "", "    ")	
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println(string(jsonData))
+		} else {
+			for _, flatInfo := range flatInfos {
+				fmt.Println(flatInfo)
+			}	
+		}
+	}
+	fmt.Println("Execution finished")
 }
 
 func createCompanies(db *sql.DB, flatInfos []*proto.FlatInfo) {
@@ -297,6 +322,42 @@ func createDates(db *sql.DB, flatInfos []*proto.FlatInfo) {
 		d.Year = year
 
 		if err := d.Insert(db); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func createShares(db *sql.DB, flatInfos []*proto.FlatInfo) {
+	for _, flatInfo := range flatInfos {
+		/*
+		ID               int    `json:"id"`                // id
+		OwnerLogin       string `json:"owner_login"`       // owner_login
+		OwnerUID         int    `json:"owner_uid"`         // owner_uid
+		OwnerDepartment  string `json:"owner_department"`  // owner_department
+		OwnerGroup       string `json:"owner_group"`       // owner_group
+		OwnerCompany     string `json:"owner_company"`     // owner_company
+		ShareeLogin      string `json:"sharee_login"`      // sharee_login
+		ShareeUID        int    `json:"sharee_uid"`        // sharee_uid
+		ShareeDepartment string `json:"sharee_department"` // sharee_department
+		ShareeGroup      string `json:"sharee_group"`      // sharee_group
+		ShareeCompany    string `json:"sharee_company"`    // sharee_company
+		Stime            int    `json:"stime"`             // stime
+		*/
+		share := models.FactShare{}
+		share.ID = int(flatInfo.GetShareInfo().Id)
+		share.OwnerLogin = flatInfo.GetOwnerInfo().Login
+		share.OwnerUID = int(flatInfo.GetOwnerInfo().Uid)
+		share.OwnerDepartment = flatInfo.GetOwnerInfo().Department
+		share.OwnerGroup = flatInfo.GetShareeInfo().Group
+		share.OwnerCompany = flatInfo.GetShareeInfo().Company
+		share.ShareeLogin = flatInfo.GetShareeInfo().Login
+		share.ShareeUID = int(flatInfo.GetShareeInfo().Uid)
+		share.ShareeDepartment = flatInfo.GetShareeInfo().Department
+		share.ShareeGroup = flatInfo.GetShareeInfo().Group
+		share.ShareeCompany = flatInfo.GetShareeInfo().Company
+		share.Stime = int(flatInfo.GetShareInfo().Stime)
+
+		if err := share.Insert(db); err != nil {
 			log.Fatal(err)
 		}
 	}

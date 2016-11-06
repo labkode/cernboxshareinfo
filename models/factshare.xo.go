@@ -45,26 +45,18 @@ func (fs *FactShare) Insert(db XODB) error {
 
 	// sql query
 	const sqlstr = `INSERT INTO mydb.fact_shares (` +
-		`owner_login, owner_uid, owner_department, owner_group, owner_company, sharee_login, sharee_uid, sharee_department, sharee_group, sharee_company, stime` +
+		`id,owner_login, owner_uid, owner_department, owner_group, owner_company, sharee_login, sharee_uid, sharee_department, sharee_group, sharee_company, stime` +
 		`) VALUES (` +
-		`?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?` +
+		`?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?` +
 		`)`
 
 	// run query
 	XOLog(sqlstr, fs.OwnerLogin, fs.OwnerUID, fs.OwnerDepartment, fs.OwnerGroup, fs.OwnerCompany, fs.ShareeLogin, fs.ShareeUID, fs.ShareeDepartment, fs.ShareeGroup, fs.ShareeCompany, fs.Stime)
-	res, err := db.Exec(sqlstr, fs.OwnerLogin, fs.OwnerUID, fs.OwnerDepartment, fs.OwnerGroup, fs.OwnerCompany, fs.ShareeLogin, fs.ShareeUID, fs.ShareeDepartment, fs.ShareeGroup, fs.ShareeCompany, fs.Stime)
+	_, err = db.Exec(sqlstr, fs.ID, fs.OwnerLogin, fs.OwnerUID, fs.OwnerDepartment, fs.OwnerGroup, fs.OwnerCompany, fs.ShareeLogin, fs.ShareeUID, fs.ShareeDepartment, fs.ShareeGroup, fs.ShareeCompany, fs.Stime)
 	if err != nil {
 		return err
 	}
 
-	// retrieve id
-	id, err := res.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	// set primary key and existence
-	fs.ID = int(id)
 	fs._exists = true
 
 	return nil

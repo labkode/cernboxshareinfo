@@ -10,14 +10,14 @@ type FactShare struct {
 	ID               int    `json:"id"`                // id
 	OwnerLogin       string `json:"owner_login"`       // owner_login
 	OwnerUID         int    `json:"owner_uid"`         // owner_uid
-	OwnerDepartment  int    `json:"owner_department"`  // owner_department
-	OwnerGroup       int    `json:"owner_group"`       // owner_group
-	OwnerCompany     int    `json:"owner_company"`     // owner_company
+	OwnerDepartment  string `json:"owner_department"`  // owner_department
+	OwnerGroup       string `json:"owner_group"`       // owner_group
+	OwnerCompany     string `json:"owner_company"`     // owner_company
 	ShareeLogin      string `json:"sharee_login"`      // sharee_login
 	ShareeUID        int    `json:"sharee_uid"`        // sharee_uid
-	ShareeDepartment int    `json:"sharee_department"` // sharee_department
-	ShareeGroup      int    `json:"sharee_group"`      // sharee_group
-	ShareeCompany    int    `json:"sharee_company"`    // sharee_company
+	ShareeDepartment string `json:"sharee_department"` // sharee_department
+	ShareeGroup      string `json:"sharee_group"`      // sharee_group
+	ShareeCompany    string `json:"sharee_company"`    // sharee_company
 	Stime            int    `json:"stime"`             // stime
 
 	// xo fields
@@ -136,37 +136,44 @@ func (fs *FactShare) Delete(db XODB) error {
 
 // DimensionCompanyByOwnerCompany returns the DimensionCompany associated with the FactShare's OwnerCompany (owner_company).
 //
-// Generated from foreign key 'fact_shares_owner_company_company_id'.
+// Generated from foreign key 'fact_shares_owner_company_company_company'.
 func (fs *FactShare) DimensionCompanyByOwnerCompany(db XODB) (*DimensionCompany, error) {
-	return DimensionCompanyByID(db, fs.OwnerCompany)
+	return DimensionCompanyByCompany(db, fs.OwnerCompany)
 }
 
 // DimensionDepartmentByOwnerDepartment returns the DimensionDepartment associated with the FactShare's OwnerDepartment (owner_department).
 //
-// Generated from foreign key 'fact_shares_owner_department_department_id'.
+// Generated from foreign key 'fact_shares_owner_department_dimension_department_department'.
 func (fs *FactShare) DimensionDepartmentByOwnerDepartment(db XODB) (*DimensionDepartment, error) {
-	return DimensionDepartmentByID(db, fs.OwnerDepartment)
+	return DimensionDepartmentByDepartment(db, fs.OwnerDepartment)
 }
 
-// DimensionCompanyByShareeCompany returns the DimensionCompany associated with the FactShare's ShareeCompany (sharee_company).
+// DimensionGroupByOwnerGroup returns the DimensionGroup associated with the FactShare's OwnerGroup (owner_group).
 //
-// Generated from foreign key 'fact_shares_sharee_company_company_id'.
-func (fs *FactShare) DimensionCompanyByShareeCompany(db XODB) (*DimensionCompany, error) {
-	return DimensionCompanyByID(db, fs.ShareeCompany)
+// Generated from foreign key 'fact_shares_owner_group_group_group'.
+func (fs *FactShare) DimensionGroupByOwnerGroup(db XODB) (*DimensionGroup, error) {
+	return DimensionGroupByGroup(db, fs.OwnerGroup)
 }
 
 // DimensionDepartmentByShareeDepartment returns the DimensionDepartment associated with the FactShare's ShareeDepartment (sharee_department).
 //
-// Generated from foreign key 'fact_shares_sharee_department_department_id'.
+// Generated from foreign key 'fact_shares_sahree_department_department_department'.
 func (fs *FactShare) DimensionDepartmentByShareeDepartment(db XODB) (*DimensionDepartment, error) {
-	return DimensionDepartmentByID(db, fs.ShareeDepartment)
+	return DimensionDepartmentByDepartment(db, fs.ShareeDepartment)
+}
+
+// DimensionCompanyByShareeCompany returns the DimensionCompany associated with the FactShare's ShareeCompany (sharee_company).
+//
+// Generated from foreign key 'fact_shares_sharee_company_company_company'.
+func (fs *FactShare) DimensionCompanyByShareeCompany(db XODB) (*DimensionCompany, error) {
+	return DimensionCompanyByCompany(db, fs.ShareeCompany)
 }
 
 // DimensionGroupByShareeGroup returns the DimensionGroup associated with the FactShare's ShareeGroup (sharee_group).
 //
-// Generated from foreign key 'fact_shares_sharee_group_group_id'.
+// Generated from foreign key 'fact_shares_sharee_group_group_group'.
 func (fs *FactShare) DimensionGroupByShareeGroup(db XODB) (*DimensionGroup, error) {
-	return DimensionGroupByID(db, fs.ShareeGroup)
+	return DimensionGroupByGroup(db, fs.ShareeGroup)
 }
 
 // DimensionDate returns the DimensionDate associated with the FactShare's Stime (stime).
@@ -174,13 +181,6 @@ func (fs *FactShare) DimensionGroupByShareeGroup(db XODB) (*DimensionGroup, erro
 // Generated from foreign key 'fact_shares_stime_date_ts'.
 func (fs *FactShare) DimensionDate(db XODB) (*DimensionDate, error) {
 	return DimensionDateByTs(db, fs.Stime)
-}
-
-// DimensionGroupByOwnerGroup returns the DimensionGroup associated with the FactShare's OwnerGroup (owner_group).
-//
-// Generated from foreign key 'fact_shres_owner_group_group_id'.
-func (fs *FactShare) DimensionGroupByOwnerGroup(db XODB) (*DimensionGroup, error) {
-	return DimensionGroupByID(db, fs.OwnerGroup)
 }
 
 // FactShareByID retrieves a row from 'mydb.fact_shares' as a FactShare.
@@ -211,8 +211,8 @@ func FactShareByID(db XODB, id int) (*FactShare, error) {
 
 // FactSharesByOwnerCompany retrieves a row from 'mydb.fact_shares' as a FactShare.
 //
-// Generated from index 'fact_shares_owner_company_company_id_idx'.
-func FactSharesByOwnerCompany(db XODB, ownerCompany int) ([]*FactShare, error) {
+// Generated from index 'fact_shares_owner_company_company_company_idx'.
+func FactSharesByOwnerCompany(db XODB, ownerCompany string) ([]*FactShare, error) {
 	var err error
 
 	// sql query
@@ -250,8 +250,8 @@ func FactSharesByOwnerCompany(db XODB, ownerCompany int) ([]*FactShare, error) {
 
 // FactSharesByOwnerDepartment retrieves a row from 'mydb.fact_shares' as a FactShare.
 //
-// Generated from index 'fact_shares_owner_department_department_department_idx'.
-func FactSharesByOwnerDepartment(db XODB, ownerDepartment int) ([]*FactShare, error) {
+// Generated from index 'fact_shares_owner_department_dimension_department_departmen_idx'.
+func FactSharesByOwnerDepartment(db XODB, ownerDepartment string) ([]*FactShare, error) {
 	var err error
 
 	// sql query
@@ -287,21 +287,21 @@ func FactSharesByOwnerDepartment(db XODB, ownerDepartment int) ([]*FactShare, er
 	return res, nil
 }
 
-// FactSharesByShareeCompany retrieves a row from 'mydb.fact_shares' as a FactShare.
+// FactSharesByOwnerGroup retrieves a row from 'mydb.fact_shares' as a FactShare.
 //
-// Generated from index 'fact_shares_sharee_company_company_id_idx'.
-func FactSharesByShareeCompany(db XODB, shareeCompany int) ([]*FactShare, error) {
+// Generated from index 'fact_shares_owner_group_group_group_idx'.
+func FactSharesByOwnerGroup(db XODB, ownerGroup string) ([]*FactShare, error) {
 	var err error
 
 	// sql query
 	const sqlstr = `SELECT ` +
 		`id, owner_login, owner_uid, owner_department, owner_group, owner_company, sharee_login, sharee_uid, sharee_department, sharee_group, sharee_company, stime ` +
 		`FROM mydb.fact_shares ` +
-		`WHERE sharee_company = ?`
+		`WHERE owner_group = ?`
 
 	// run query
-	XOLog(sqlstr, shareeCompany)
-	q, err := db.Query(sqlstr, shareeCompany)
+	XOLog(sqlstr, ownerGroup)
+	q, err := db.Query(sqlstr, ownerGroup)
 	if err != nil {
 		return nil, err
 	}
@@ -328,8 +328,8 @@ func FactSharesByShareeCompany(db XODB, shareeCompany int) ([]*FactShare, error)
 
 // FactSharesByShareeDepartment retrieves a row from 'mydb.fact_shares' as a FactShare.
 //
-// Generated from index 'fact_shares_sharee_department_department_id_idx'.
-func FactSharesByShareeDepartment(db XODB, shareeDepartment int) ([]*FactShare, error) {
+// Generated from index 'fact_shares_sahree_department_department_department_idx'.
+func FactSharesByShareeDepartment(db XODB, shareeDepartment string) ([]*FactShare, error) {
 	var err error
 
 	// sql query
@@ -365,10 +365,49 @@ func FactSharesByShareeDepartment(db XODB, shareeDepartment int) ([]*FactShare, 
 	return res, nil
 }
 
+// FactSharesByShareeCompany retrieves a row from 'mydb.fact_shares' as a FactShare.
+//
+// Generated from index 'fact_shares_sharee_company_company_company_idx'.
+func FactSharesByShareeCompany(db XODB, shareeCompany string) ([]*FactShare, error) {
+	var err error
+
+	// sql query
+	const sqlstr = `SELECT ` +
+		`id, owner_login, owner_uid, owner_department, owner_group, owner_company, sharee_login, sharee_uid, sharee_department, sharee_group, sharee_company, stime ` +
+		`FROM mydb.fact_shares ` +
+		`WHERE sharee_company = ?`
+
+	// run query
+	XOLog(sqlstr, shareeCompany)
+	q, err := db.Query(sqlstr, shareeCompany)
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	res := []*FactShare{}
+	for q.Next() {
+		fs := FactShare{
+			_exists: true,
+		}
+
+		// scan
+		err = q.Scan(&fs.ID, &fs.OwnerLogin, &fs.OwnerUID, &fs.OwnerDepartment, &fs.OwnerGroup, &fs.OwnerCompany, &fs.ShareeLogin, &fs.ShareeUID, &fs.ShareeDepartment, &fs.ShareeGroup, &fs.ShareeCompany, &fs.Stime)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, &fs)
+	}
+
+	return res, nil
+}
+
 // FactSharesByShareeGroup retrieves a row from 'mydb.fact_shares' as a FactShare.
 //
-// Generated from index 'fact_shares_sharee_group_group_id_idx'.
-func FactSharesByShareeGroup(db XODB, shareeGroup int) ([]*FactShare, error) {
+// Generated from index 'fact_shares_sharee_group_group_group_idx'.
+func FactSharesByShareeGroup(db XODB, shareeGroup string) ([]*FactShare, error) {
 	var err error
 
 	// sql query
@@ -419,45 +458,6 @@ func FactSharesByStime(db XODB, stime int) ([]*FactShare, error) {
 	// run query
 	XOLog(sqlstr, stime)
 	q, err := db.Query(sqlstr, stime)
-	if err != nil {
-		return nil, err
-	}
-	defer q.Close()
-
-	// load results
-	res := []*FactShare{}
-	for q.Next() {
-		fs := FactShare{
-			_exists: true,
-		}
-
-		// scan
-		err = q.Scan(&fs.ID, &fs.OwnerLogin, &fs.OwnerUID, &fs.OwnerDepartment, &fs.OwnerGroup, &fs.OwnerCompany, &fs.ShareeLogin, &fs.ShareeUID, &fs.ShareeDepartment, &fs.ShareeGroup, &fs.ShareeCompany, &fs.Stime)
-		if err != nil {
-			return nil, err
-		}
-
-		res = append(res, &fs)
-	}
-
-	return res, nil
-}
-
-// FactSharesByOwnerGroup retrieves a row from 'mydb.fact_shares' as a FactShare.
-//
-// Generated from index 'fact_shres_owner_group_group_id_idx'.
-func FactSharesByOwnerGroup(db XODB, ownerGroup int) ([]*FactShare, error) {
-	var err error
-
-	// sql query
-	const sqlstr = `SELECT ` +
-		`id, owner_login, owner_uid, owner_department, owner_group, owner_company, sharee_login, sharee_uid, sharee_department, sharee_group, sharee_company, stime ` +
-		`FROM mydb.fact_shares ` +
-		`WHERE owner_group = ?`
-
-	// run query
-	XOLog(sqlstr, ownerGroup)
-	q, err := db.Query(sqlstr, ownerGroup)
 	if err != nil {
 		return nil, err
 	}

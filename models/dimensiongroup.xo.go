@@ -10,7 +10,7 @@ import (
 
 // DimensionGroup represents a row from 'mydb.dimension_group'.
 type DimensionGroup struct {
-	Group  string         `json:"group"`  // group
+	Egroup string         `json:"egroup"` // egroup
 	Opaque sql.NullString `json:"opaque"` // opaque
 
 	// xo fields
@@ -57,7 +57,7 @@ func (dg *DimensionGroup) Insert(db XODB) error {
 	}
 
 	// set primary key and existence
-	dg.Group = string(id)
+	dg.Egroup = string(id)
 	dg._exists = true
 
 	return nil
@@ -80,11 +80,11 @@ func (dg *DimensionGroup) Update(db XODB) error {
 	// sql query
 	const sqlstr = `UPDATE mydb.dimension_group SET ` +
 		`opaque = ?` +
-		` WHERE group = ?`
+		` WHERE egroup = ?`
 
 	// run query
-	XOLog(sqlstr, dg.Opaque, dg.Group)
-	_, err = db.Exec(sqlstr, dg.Opaque, dg.Group)
+	XOLog(sqlstr, dg.Opaque, dg.Egroup)
+	_, err = db.Exec(sqlstr, dg.Opaque, dg.Egroup)
 	return err
 }
 
@@ -112,11 +112,11 @@ func (dg *DimensionGroup) Delete(db XODB) error {
 	}
 
 	// sql query
-	const sqlstr = `DELETE FROM mydb.dimension_group WHERE group = ?`
+	const sqlstr = `DELETE FROM mydb.dimension_group WHERE egroup = ?`
 
 	// run query
-	XOLog(sqlstr, dg.Group)
-	_, err = db.Exec(sqlstr, dg.Group)
+	XOLog(sqlstr, dg.Egroup)
+	_, err = db.Exec(sqlstr, dg.Egroup)
 	if err != nil {
 		return err
 	}
@@ -127,25 +127,25 @@ func (dg *DimensionGroup) Delete(db XODB) error {
 	return nil
 }
 
-// DimensionGroupByGroup retrieves a row from 'mydb.dimension_group' as a DimensionGroup.
+// DimensionGroupByEgroup retrieves a row from 'mydb.dimension_group' as a DimensionGroup.
 //
-// Generated from index 'dimension_group_group_pkey'.
-func DimensionGroupByGroup(db XODB, group string) (*DimensionGroup, error) {
+// Generated from index 'dimension_group_egroup_pkey'.
+func DimensionGroupByEgroup(db XODB, egroup string) (*DimensionGroup, error) {
 	var err error
 
 	// sql query
 	const sqlstr = `SELECT ` +
-		`group, opaque ` +
+		`egroup, opaque ` +
 		`FROM mydb.dimension_group ` +
-		`WHERE group = ?`
+		`WHERE egroup = ?`
 
 	// run query
-	XOLog(sqlstr, group)
+	XOLog(sqlstr, egroup)
 	dg := DimensionGroup{
 		_exists: true,
 	}
 
-	err = db.QueryRow(sqlstr, group).Scan(&dg.Group, &dg.Opaque)
+	err = db.QueryRow(sqlstr, egroup).Scan(&dg.Egroup, &dg.Opaque)
 	if err != nil {
 		return nil, err
 	}

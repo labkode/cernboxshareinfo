@@ -152,7 +152,7 @@ func (fs *FactShare) DimensionDepartmentByOwnerDepartment(db XODB) (*DimensionDe
 //
 // Generated from foreign key 'fact_shares_owner_group_group_group'.
 func (fs *FactShare) DimensionGroupByOwnerGroup(db XODB) (*DimensionGroup, error) {
-	return DimensionGroupByGroup(db, fs.OwnerGroup)
+	return DimensionGroupByEgroup(db, fs.OwnerGroup)
 }
 
 // DimensionDepartmentByShareeDepartment returns the DimensionDepartment associated with the FactShare's ShareeDepartment (sharee_department).
@@ -173,7 +173,7 @@ func (fs *FactShare) DimensionCompanyByShareeCompany(db XODB) (*DimensionCompany
 //
 // Generated from foreign key 'fact_shares_sharee_group_group_group'.
 func (fs *FactShare) DimensionGroupByShareeGroup(db XODB) (*DimensionGroup, error) {
-	return DimensionGroupByGroup(db, fs.ShareeGroup)
+	return DimensionGroupByEgroup(db, fs.ShareeGroup)
 }
 
 // DimensionDate returns the DimensionDate associated with the FactShare's Stime (stime).

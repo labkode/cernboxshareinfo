@@ -35,6 +35,16 @@ var testcases int
 var fillstarmodel bool
 var showdata bool
 var outputasjson bool
+var version bool
+
+// Build information obtained with the help of -ldflags
+var (
+	appName       string = "cernboxshareinfo"
+	buildDate     string // date -u
+	gitTag        string // git describe --exact-match HEAD
+	gitNearestTag string // git describe --abbrev=0 --tags HEAD
+	gitCommit     string // git rev-parse HEAD
+)
 
 func main() {
 	flag.StringVar(&sqlFile, "sqlfile", "shares.sql", "file containing the mysql oc_shares dump")
@@ -49,7 +59,19 @@ func main() {
 	flag.BoolVar(&fillstarmodel, "fillstarmodel", false, "fill the existing sql star model on the configured mysql database")
 	flag.BoolVar(&showdata, "showdata", true, "if enabled outputs the correlated data (one line per record)")
 	flag.BoolVar(&outputasjson, "outputasjson", false, "if enabled outputs the data in JSON format instead of proto format")
+	flag.BoolVar(&version, "version", false, "show version")
 	flag.Parse()
+
+	if version {
+		// if gitTag is not empty we are on release build
+		if gitTag != "" {
+			fmt.Printf("%s %s commit:%s release-build\n", appName, gitNearestTag, gitCommit)
+			os.Exit(0)
+		}
+		fmt.Printf("%s %s commit:%s dev-build\n", appName, gitNearestTag, gitCommit)
+		os.Exit(0)
+
+	}
 
 	fmt.Printf("Loading shares from: %s\n", sqlFile)
 	fmt.Printf("PhoneBook Application: %s\n", phonebookBinary)
@@ -154,7 +176,7 @@ func main() {
 		iter.Release()
 		fmt.Printf("Loaded %d entries from phonebook cached db\n", total)
 	}
-	
+
 	if testcases > -1 {
 		shareInfos = shareInfos[:testcases]
 	}
@@ -231,7 +253,7 @@ func main() {
 
 	if showdata {
 		if outputasjson {
-			jsonData, err := json.MarshalIndent(flatInfos, "", "    ")	
+			jsonData, err := json.MarshalIndent(flatInfos, "", "    ")
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -239,7 +261,7 @@ func main() {
 		} else {
 			for _, flatInfo := range flatInfos {
 				fmt.Println(flatInfo)
-			}	
+			}
 		}
 	}
 	fmt.Println("Execution finished")
@@ -267,17 +289,17 @@ func createCompanies(db *sql.DB, flatInfos []*proto.FlatInfo) {
 func createGroups(db *sql.DB, flatInfos []*proto.FlatInfo) {
 	groups := map[string]*proto.FlatInfo{}
 	for _, flatInfo := range flatInfos {
-		if _, ok :=groups[flatInfo.GetOwnerInfo().Group]; !ok {
+		if _, ok := groups[flatInfo.GetOwnerInfo().Group]; !ok {
 			groups[flatInfo.GetOwnerInfo().Group] = flatInfo
 		}
-		if _, ok :=groups[flatInfo.GetShareeInfo().Group]; !ok {
+		if _, ok := groups[flatInfo.GetShareeInfo().Group]; !ok {
 			groups[flatInfo.GetShareeInfo().Group] = flatInfo
 		}
 	}
 	for pk := range groups {
 		group := models.DimensionGroup{}
 		group.Egroup = pk
-		if err :=group.Insert(db); err != nil {
+		if err := group.Insert(db); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -286,17 +308,17 @@ func createGroups(db *sql.DB, flatInfos []*proto.FlatInfo) {
 func createDepartments(db *sql.DB, flatInfos []*proto.FlatInfo) {
 	departments := map[string]*proto.FlatInfo{}
 	for _, flatInfo := range flatInfos {
-		if _, ok :=departments[flatInfo.GetOwnerInfo().Department]; !ok {
+		if _, ok := departments[flatInfo.GetOwnerInfo().Department]; !ok {
 			departments[flatInfo.GetOwnerInfo().Department] = flatInfo
 		}
-		if _, ok :=departments[flatInfo.GetShareeInfo().Department]; !ok {
+		if _, ok := departments[flatInfo.GetShareeInfo().Department]; !ok {
 			departments[flatInfo.GetShareeInfo().Department] = flatInfo
 		}
 	}
 	for pk := range departments {
 		department := models.DimensionDepartment{}
 		department.Department = pk
-		if err :=department.Insert(db); err != nil {
+		if err := department.Insert(db); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -311,7 +333,7 @@ func createDates(db *sql.DB, flatInfos []*proto.FlatInfo) {
 	}
 	for pk := range dates {
 		t := time.Unix(pk, 0)
-		day := t.Day();
+		day := t.Day()
 		month := t.Month()
 		year := t.Year()
 
@@ -330,18 +352,18 @@ func createDates(db *sql.DB, flatInfos []*proto.FlatInfo) {
 func createShares(db *sql.DB, flatInfos []*proto.FlatInfo) {
 	for _, flatInfo := range flatInfos {
 		/*
-		ID               int    `json:"id"`                // id
-		OwnerLogin       string `json:"owner_login"`       // owner_login
-		OwnerUID         int    `json:"owner_uid"`         // owner_uid
-		OwnerDepartment  string `json:"owner_department"`  // owner_department
-		OwnerGroup       string `json:"owner_group"`       // owner_group
-		OwnerCompany     string `json:"owner_company"`     // owner_company
-		ShareeLogin      string `json:"sharee_login"`      // sharee_login
-		ShareeUID        int    `json:"sharee_uid"`        // sharee_uid
-		ShareeDepartment string `json:"sharee_department"` // sharee_department
-		ShareeGroup      string `json:"sharee_group"`      // sharee_group
-		ShareeCompany    string `json:"sharee_company"`    // sharee_company
-		Stime            int    `json:"stime"`             // stime
+			ID               int    `json:"id"`                // id
+			OwnerLogin       string `json:"owner_login"`       // owner_login
+			OwnerUID         int    `json:"owner_uid"`         // owner_uid
+			OwnerDepartment  string `json:"owner_department"`  // owner_department
+			OwnerGroup       string `json:"owner_group"`       // owner_group
+			OwnerCompany     string `json:"owner_company"`     // owner_company
+			ShareeLogin      string `json:"sharee_login"`      // sharee_login
+			ShareeUID        int    `json:"sharee_uid"`        // sharee_uid
+			ShareeDepartment string `json:"sharee_department"` // sharee_department
+			ShareeGroup      string `json:"sharee_group"`      // sharee_group
+			ShareeCompany    string `json:"sharee_company"`    // sharee_company
+			Stime            int    `json:"stime"`             // stime
 		*/
 		share := models.FactShare{}
 		share.ID = int(flatInfo.GetShareInfo().Id)
@@ -363,7 +385,6 @@ func createShares(db *sql.DB, flatInfos []*proto.FlatInfo) {
 	}
 }
 
-
 func getPersonInfo(username string) (*proto.PersonInfo, error) {
 	cmd := exec.Command(phonebookBinary, "--login", username, "-t", "login", "-t", "uid", "-t", "department", "-t", "group", "-t", "organization", "-t", "company", "-t", "office")
 	stdout, _, err := executeCMD(cmd)
@@ -379,7 +400,7 @@ func getPersonInfo(username string) (*proto.PersonInfo, error) {
 	personInfo.Login = tokens[0]
 	personInfo.Uid = int64(uid)
 	personInfo.Department = tokens[2]
-	personInfo.Group= tokens[3]
+	personInfo.Group = tokens[3]
 	personInfo.Organization = tokens[4]
 	personInfo.Company = tokens[5]
 	personInfo.Office = tokens[6]
